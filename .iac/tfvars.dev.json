@@ -24,7 +24,7 @@
       "S3_BUCKET_NAME": "saarthi-dev-uploads",
       "SECRET_NAME": "saarthi-ai/dev/secrets",
       "DYNAMODB_TABLE_PREFIX": "saarthi-ai",
-      "CORS_ORIGINS": "http://localhost:3000,http://localhost:5173,https://saarthi-ai-portal.vercel.app,https://*.vercel.app"
+      "CORS_ORIGINS": "[\"http://localhost:3000\",\"http://localhost:5173\",\"https://saarthi-ai-portal.vercel.app\",\"https://*.vercel.app\"]"
     },
     "secrets": {}
   },

@@ -4,6 +4,7 @@ Handles environment-driven settings (DEV vs PROD) without code duplication.
 Adheres to strict typing and environment variable overrides via Pydantic Settings.
 """
 
+import json
 from enum import StrEnum
 from functools import lru_cache
 from typing import Any, Literal
@@ -140,6 +141,22 @@ class Settings(BaseSettings):
     GUARDRAILS_ENABLED: bool = True
     GUARDRAILS_STRICT_MODE: bool = False
     MIN_FAITHFULNESS_SCORE: float = 0.7
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def validate_cors_origins(cls, v: Any) -> list[str]:
+        """Support comma-separated strings or JSON arrays for CORS_ORIGINS."""
+        if isinstance(v, str):
+            v = v.strip()
+            if v.startswith("[") and v.endswith("]"):
+                try:
+                    return json.loads(v)
+                except Exception:
+                    pass
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        if isinstance(v, (list, tuple, set)):
+            return [str(x) for x in v]
+        return v
 
     @field_validator("ENV", mode="before")
     @classmethod
