@@ -1,0 +1,22 @@
+# ============================================================
+# Saarthi AI — Development & Test Dependencies
+# ============================================================
+# Install with: pip install -r requirements-dev.txt
+# Or with uv: uv sync --all-extras
+# ============================================================
+
+# Install all runtime dependencies first
+-r requirements.txt
+
+# ── Testing ────────────────────────────────────────────────
+pytest>=8.3.0
+pytest-asyncio>=0.24.0
+pytest-cov>=5.0.0
+faker>=20.0.0
+
+# ── Linting & Formatting ───────────────────────────────────
+ruff>=0.6.0
+
+# ── Type Checking ──────────────────────────────────────────
+mypy>=1.11.0
+types-requests>=2.31.0

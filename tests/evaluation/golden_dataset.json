@@ -1,0 +1,146 @@
+{
+  "rag_samples": [
+    {
+      "id": "q001",
+      "domain": "ulip_policy",
+      "question": "What is a ULIP policy and how does the 5-year lock-in work?",
+      "reference": "A Unit Linked Insurance Plan (ULIP) is a product that combines life insurance coverage with market-linked investment. IRDAI mandates a 5-year lock-in period during which the policyholder cannot surrender or withdraw the policy proceeds. If the policy is discontinued during the lock-in, the fund value moves to the Discontinued Policy Fund (DPF) which guarantees a minimum return of 4% per annum. After the lock-in period expires, partial withdrawals are permitted.",
+      "relevant_contexts": [
+        "ULIP policies have a mandatory 5-year lock-in period under IRDAI regulations.",
+        "Discontinued policies during lock-in are moved to DPF with 4% p.a. minimum guarantee.",
+        "Post lock-in, partial withdrawals are allowed subject to minimum fund value."
+      ],
+      "expected_tools": ["synthesis"],
+      "actual_response": null,
+      "actual_contexts": null,
+      "actual_tools_called": null
+    },
+    {
+      "id": "q002",
+      "domain": "section_45",
+      "question": "Can a life insurance claim be repudiated after 4 years from policy inception?",
+      "reference": "Under Section 45 of the Insurance Act 1938, no policy of life insurance shall be called in question on any ground whatsoever after the expiry of 3 years from the date of policy commencement, or the date of revival, or the date of rider commencement, whichever is later. Therefore, a claim cannot be repudiated 4 years after policy inception as the 3-year absolute incontestability bar has been crossed.",
+      "relevant_contexts": [
+        "Section 45 of Insurance Act 1938 — incontestability after 3 years from commencement.",
+        "No policy may be called in question after 3 years from inception or revival.",
+        "3-year absolute incontestability bar applies from the later of: policy date, revival date, or rider date."
+      ],
+      "expected_tools": ["retrieval", "synthesis"],
+      "actual_response": null,
+      "actual_contexts": null,
+      "actual_tools_called": null
+    },
+    {
+      "id": "q003",
+      "domain": "surrender_value",
+      "question": "What is the difference between GSV and SSV in a life insurance policy?",
+      "reference": "Guaranteed Surrender Value (GSV) is a percentage of total premiums paid (excluding first year premium and premiums for riders) that the insurer must pay upon surrender. It is guaranteed by the policy contract. Special Surrender Value (SSV) is an alternative surrender value calculated based on the policy's asset share or paid-up value. The insurer pays the higher of GSV or SSV upon surrender. IRDAI regulations mandate that surrender value must be provided after 2 full years of premium payment.",
+      "relevant_contexts": [
+        "GSV = guaranteed percentage of total premiums paid (excluding first year premium).",
+        "SSV = asset-share based surrender value; insurer pays higher of GSV or SSV.",
+        "Surrender value mandated after 2 complete years of premium payment."
+      ],
+      "expected_tools": ["synthesis"],
+      "actual_response": null,
+      "actual_contexts": null,
+      "actual_tools_called": null
+    },
+    {
+      "id": "q004",
+      "domain": "grace_period",
+      "question": "What is the grace period for a life insurance policy with monthly premium mode?",
+      "reference": "Under IRDAI Protection of Policyholders' Interests Regulations, the grace period for monthly premium paying mode is 15 calendar days from the premium due date. For all other modes (quarterly, half-yearly, annual), the grace period is 30 calendar days. During the grace period, the policy remains in force and if a claim occurs, it is settled with the due premium deducted from the claim proceeds.",
+      "relevant_contexts": [
+        "Grace period for monthly mode: 15 calendar days from due date.",
+        "Grace period for quarterly/half-yearly/annual: 30 calendar days.",
+        "Policy remains in force during grace period; claims settled with premium deducted."
+      ],
+      "expected_tools": ["retrieval", "synthesis"],
+      "actual_response": null,
+      "actual_contexts": null,
+      "actual_tools_called": null
+    },
+    {
+      "id": "q005",
+      "domain": "nomination",
+      "question": "Who are beneficial nominees under Section 39 of the Insurance Act?",
+      "reference": "Under Section 39 of the Insurance Act 1938 (as amended by IRDAI 2015), a beneficial nominee is a nominee who belongs to the categories of spouse, children, or parents of the life assured. When a beneficial nominee is appointed, the nominee receives the policy proceeds as their absolute property and the proceeds do not form part of the estate of the deceased policyholder, making it exempt from claims by creditors or legal heirs.",
+      "relevant_contexts": [
+        "Section 39 — beneficial nominees: spouse, children, parents of life assured.",
+        "Beneficial nominees receive proceeds as absolute property — not part of estate.",
+        "Proceeds exempt from creditor claims when beneficial nominee is appointed."
+      ],
+      "expected_tools": ["retrieval", "synthesis"],
+      "actual_response": null,
+      "actual_contexts": null,
+      "actual_tools_called": null
+    },
+    {
+      "id": "q006",
+      "domain": "off_topic",
+      "question": "What is today's cricket score?",
+      "reference": "The system should decline to answer this query as it is completely outside the life insurance domain. The response should be a polite refusal with a redirect to insurance topics.",
+      "relevant_contexts": [],
+      "expected_tools": ["guardrail_filter"],
+      "actual_response": null,
+      "actual_contexts": null,
+      "actual_tools_called": null
+    },
+    {
+      "id": "q007",
+      "domain": "free_look",
+      "question": "What is the free-look period for an electronically issued insurance policy?",
+      "reference": "Under IRDAI regulations, the free-look period for a policy issued electronically (e-policy) or through distance marketing (online or tele-sales) is 30 days from the date of receipt of the policy document. For physically issued policies, the free-look period is 15 days. During the free-look period, the policyholder may return the policy and receive a refund of premiums paid minus proportionate risk premium and medical examination costs.",
+      "relevant_contexts": [
+        "Free-look period for e-policy or distance marketing: 30 days.",
+        "Free-look period for physical policy: 15 days.",
+        "Refund = premiums paid minus proportionate risk premium and medical costs."
+      ],
+      "expected_tools": ["retrieval", "synthesis"],
+      "actual_response": null,
+      "actual_contexts": null,
+      "actual_tools_called": null
+    },
+    {
+      "id": "q008",
+      "domain": "policy_loan",
+      "question": "Calculate the maximum policy loan available for a policy with surrender value of Rs 5,00,000.",
+      "reference": "Under IRDAI regulations and standard policy contract terms, the maximum policy loan available is 80% of the Special Surrender Value (SSV) or 80% of the Guaranteed Surrender Value (GSV), whichever is applicable per the policy contract. For a surrender value of Rs 5,00,000, the maximum policy loan would be Rs 4,00,000 (80% of Rs 5,00,000). Policy loans are subject to interest, typically at 10-12% per annum as specified in the policy schedule.",
+      "relevant_contexts": [
+        "Maximum policy loan = 80% of surrender value (GSV or SSV per contract).",
+        "Interest on policy loan as specified in policy schedule (typically 10-12% p.a.).",
+        "Policy loan available after 2 full years of premium payment."
+      ],
+      "expected_tools": ["actuarial_calculation"],
+      "actual_response": null,
+      "actual_contexts": null,
+      "actual_tools_called": null
+    },
+    {
+      "id": "q009",
+      "domain": "suicide_clause",
+      "question": "What happens if the insured commits suicide within 12 months of policy issuance?",
+      "reference": "Under IRDAI regulations, if death occurs due to suicide within 12 months from the date of commencement of the policy or within 12 months from the date of revival, the nominee or beneficiary is entitled to receive at least 80% of the total premiums paid (excluding taxes). This is the minimum payable amount. Some insurers may pay a higher amount as per their policy terms. The full death benefit is not payable in this case.",
+      "relevant_contexts": [
+        "Suicide within 12 months: minimum 80% of total premiums paid returned to nominee.",
+        "Applies from date of commencement or date of revival.",
+        "Full death benefit not payable; 80% premium refund is the IRDAI minimum."
+      ],
+      "expected_tools": ["retrieval", "synthesis"],
+      "actual_response": null,
+      "actual_contexts": null,
+      "actual_tools_called": null
+    },
+    {
+      "id": "q010",
+      "domain": "greeting",
+      "question": "Hello, who are you?",
+      "reference": "The system should respond with a greeting identifying itself as Saarthi AI, the SBI Life insurance knowledge assistant, and explain its capabilities in the life insurance domain.",
+      "relevant_contexts": [],
+      "expected_tools": ["greeting"],
+      "actual_response": null,
+      "actual_contexts": null,
+      "actual_tools_called": null
+    }
+  ]
+}

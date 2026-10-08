@@ -1,0 +1,21 @@
+# Terraform Gitignore
+.terraform.lock.hcl
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Exclude sensitive tfvars by default, but allow committed environment configs with placeholders
+*.tfvars
+*.tfvars.json
+
+# Whitelist environment configs
+!tfvars.dev.json
+!tfvars.prod.json
