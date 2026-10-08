@@ -1,8 +1,9 @@
 # Infrastructure as Code (IaC) — Saarthi AI AWS ECS Deployment
+**Target Region:** `ap-southeast-2` (Sydney)  
+**Target AWS Account:** `974913402908`  
+**Environment:** `DEV`
 
 This directory contains production-ready Terraform Infrastructure as Code (IaC) for deploying **Saarthi AI** on **AWS ECS Fargate** with an Application Load Balancer (ALB), auto-scaling, ECR repository, and AWS Secrets Manager integration.
-
-Modeled after enterprise cloud standards (similar to Cinépolis microservices), this setup provides separate environment configs for `DEV` and `PROD`.
 
 ---
 
@@ -13,7 +14,7 @@ Modeled after enterprise cloud standards (similar to Cinépolis microservices), 
                          │
                          ▼
         ┌─────────────────────────────────┐
-        │   Application Load Balancer     │  (Public Subnets)
+        │   Application Load Balancer     │  (Public Subnets in ap-southeast-2)
         │      (HTTP :80 / HTTPS :443)    │
         └────────────────┬────────────────┘
                          │
@@ -22,14 +23,15 @@ Modeled after enterprise cloud standards (similar to Cinépolis microservices), 
         │      Health Check: /health      │
         └────────────────┬────────────────┘
                          │
-          Private VPC Subnets (awsvpc)
+          VPC Subnets (awsvpc, ap-southeast-2)
         ┌─────────────────────────────────┐
         │   ECS Service (Fargate)         │
         │   ┌───────────────────────────┐ │
         │   │ Container: saarthi-ai     │ │
         │   │ Port: 8000                │ │
         │   │ Pulls Image from ECR      │ │
-        │   │ Pulls Secrets from SM     │ │
+        │   │ Task Role: DynamoDB, S3,  │ │
+        │   │ Secrets Manager, Bedrock  │ │
         │   │ Push Logs to CloudWatch   │ │
         │   └───────────────────────────┘ │
         │         Auto-Scaling Target     │
@@ -43,116 +45,89 @@ Modeled after enterprise cloud standards (similar to Cinépolis microservices), 
 
 | File | Purpose |
 |------|---------|
-| [`terraform.tf`](./terraform.tf) | Terraform version, S3 remote state backend, DynamoDB lock, and AWS provider. |
-| [`variable.tf`](./variable.tf) | Input variable definitions with types and descriptions. |
-| [`local.tf`](./local.tf) | Local variables, environment variables mapping, secrets mapping, and resource tags. |
-| [`main.tf`](./main.tf) | Complete AWS infrastructure: ECR, CloudWatch, ALB, Security Groups, IAM Roles, ECS Cluster, Task Definition, Service, and AutoScaling. |
-| [`outputs.tf`](./outputs.tf) | Output attributes: ALB DNS Name, ECS Service, Cluster Name, and ECR URL. |
-| [`tfvars.dev.json`](./tfvars.dev.json) | Variables & placeholders for **DEV** environment. |
-| [`tfvars.prod.json`](./tfvars.prod.json) | Variables & placeholders for **PROD** environment (high-availability sizing). |
-| [`.gitignore`](./.gitignore) | Ignores local `.terraform/` and state files while preserving environment configs. |
+| [`terraform.tf`](./terraform.tf) | Terraform version, AWS provider (`ap-southeast-2`), and state backend. |
+| [`variable.tf`](./variable.tf) | Input variables configured for account `974913402908` and `ap-southeast-2`. |
+| [`local.tf`](./local.tf) | Dynamic default VPC discovery, ECR image resolution, and environment merging. |
+| [`main.tf`](./main.tf) | AWS infrastructure: ECR, CloudWatch, ALB, Security Groups, IAM Roles, ECS Cluster, Task Definition, Service, and AutoScaling. |
+| [`outputs.tf`](./outputs.tf) | Outputs: ALB DNS Name, ECS Service, Cluster Name, and ECR URL. |
+| [`tfvars.dev.json`](./tfvars.dev.json) | Variables pre-configured for **DEV** in `ap-southeast-2` (`974913402908`). |
+| [`tfvars.prod.json`](./tfvars.prod.json) | Variables template for **PROD** environment. |
 
 ---
 
-## AWS Details & Placeholder Reference Checklist
+## Pre-Requisites & Configuration
 
-Before deploying, update the placeholders in the following files with your AWS account details:
-
-### 1. In `terraform.tf`
-- `<PLACEHOLDER_S3_TERRAFORM_STATE_BUCKET>`: Name of your S3 bucket storing Terraform state (e.g., `saarthi-ai-terraform-states`).
-- `<PLACEHOLDER_DYNAMODB_LOCK_TABLE>`: Name of your DynamoDB table used for state locking (e.g., `saarthi-ai-terraform-locks`).
-*(Note: If testing locally without remote state first, you can temporarily comment out the `backend "s3"` block).*
-
-### 2. In `tfvars.dev.json` and `tfvars.prod.json`
-
-| Placeholder | Description | Example |
-|-------------|-------------|---------|
-| `account_id` | Your 12-digit AWS Account ID | `"123456789012"` |
-| `aws_region` | AWS region where you deploy | `"us-east-1"` or `"ap-south-1"` |
-| `vpc_id` | ID of your VPC | `"vpc-0123456789abcdef0"` |
-| `private_subnet_ids` | IDs of private subnets for ECS tasks | `["subnet-01111111111111111", "subnet-02222222222222222"]` |
-| `public_subnet_ids` | IDs of public subnets for the Internet-facing ALB | `["subnet-03333333333333333", "subnet-04444444444444444"]` |
-| `certificate_arn` | (Optional) ACM Certificate ARN for HTTPS | `"arn:aws:acm:us-east-1:123456789012:certificate/xxxx"` (or `""` for HTTP only) |
-| `QDRANT_HOST` | Internal hostname / endpoint of your Qdrant vector database | `"http://qdrant.dev.internal:6333"` |
-| `CORS_ORIGINS` | Web frontend URL allowed to call the API | `"https://saarthi.yourdomain.com"` |
-
-### 3. Application Secrets (in AWS Secrets Manager)
-Create the following secrets in AWS Secrets Manager and place their ARNs under `task_definition.secrets`:
-- `LOGFIRE_TOKEN`: Token for Pydantic Logfire observability.
-- `QWEN_API_KEY`: API key for DashScope / Qwen LLM.
-- `TAVILY_API_KEY`: API key for Tavily regulatory search.
-- `QDRANT_API_KEY`: Secret key for Qdrant database access.
-- `SECRET_KEY`: Random 64-char key for session encryption & JWT tokens.
+1. **AWS CLI Authenticated:**
+   ```bash
+   aws sts get-caller-identity
+   # Should return Account: 974913402908
+   ```
+2. **Target Region:** `ap-southeast-2`
+3. **Secrets Manager Secret:**
+   Ensure secret `saarthi-ai/dev/secrets` exists in AWS Secrets Manager (`ap-southeast-2`) with your API keys (`PORTKEY_API_KEY`, `LOGFIRE_TOKEN`, `QDRANT_API_KEY`, `JWT_SECRET_KEY`). If not created yet, run:
+   ```bash
+   python scripts/setup_aws_resources.py
+   ```
 
 ---
 
-## Deployment Instructions
+## Deployment Walkthrough
 
-### Step 1: Build & Push Docker Image to Amazon ECR
+### Step 1: Create ECR Repository & Push Docker Image
 
 ```bash
-# 1. Log in to AWS ECR
-aws ecr get-login-password --region <YOUR_AWS_REGION> | docker login --username AWS --password-stdin <ACCOUNT_ID>.dkr.ecr.<YOUR_AWS_REGION>.amazonaws.com
+# 1. Authenticate Docker with Amazon ECR in ap-southeast-2
+aws ecr get-login-password --region ap-southeast-2 | docker login --username AWS --password-stdin 974913402908.dkr.ecr.ap-southeast-2.amazonaws.com
 
-# 2. Build the production Docker image from the repository root
-cd /home/pratik/projects/rag-with-aws
+# 2. Ensure ECR repository exists
+aws ecr describe-repositories --repository-names saarthi-ai --region ap-southeast-2 || \
+  aws ecr create-repository --repository-name saarthi-ai --region ap-southeast-2
+
+# 3. Build the container from saarthi-ai directory
+cd /home/pratik/projects/rag-with-aws/saarthi-ai
 docker build -t saarthi-ai:latest -f Dockerfile .
 
-# 3. Tag and push to ECR
-docker tag saarthi-ai:latest <ACCOUNT_ID>.dkr.ecr.<YOUR_AWS_REGION>.amazonaws.com/saarthi-ai:latest
-docker push <ACCOUNT_ID>.dkr.ecr.<YOUR_AWS_REGION>.amazonaws.com/saarthi-ai:latest
+# 4. Tag and push to ECR
+docker tag saarthi-ai:latest 974913402908.dkr.ecr.ap-southeast-2.amazonaws.com/saarthi-ai:latest
+docker push 974913402908.dkr.ecr.ap-southeast-2.amazonaws.com/saarthi-ai:latest
 ```
 
 ---
 
-### Step 2: Deploy DEV Environment
+### Step 2: Deploy Infrastructure via Terraform
 
 ```bash
-cd /home/pratik/projects/rag-with-aws/.iac
+cd /home/pratik/projects/rag-with-aws/saarthi-ai/.iac
 
-# Initialize Terraform plugins & backend
+# 1. Initialize Terraform
 terraform init
 
-# Select or create the dev workspace
-terraform workspace select dev || terraform workspace new dev
-
-# Preview the changes
+# 2. Preview the plan
 terraform plan -var-file=tfvars.dev.json
 
-# Apply and provision infrastructure
+# 3. Apply and deploy ECS Cluster, ALB & Service
 terraform apply -var-file=tfvars.dev.json
 ```
 
 ---
 
-### Step 3: Deploy PROD Environment
+### Step 3: Verify Deployment
 
+After `terraform apply` finishes, it will print the outputs:
 ```bash
-cd /home/pratik/projects/rag-with-aws/.iac
+Apply complete! Resources: 18 added, 0 changed, 0 destroyed.
 
-# Select or create the prod workspace
-terraform workspace select prod || terraform workspace new prod
-
-# Preview changes with prod sizing (min 2, desired 3, max 10 tasks)
-terraform plan -var-file=tfvars.prod.json
-
-# Apply to production
-terraform apply -var-file=tfvars.prod.json
+Outputs:
+alb_dns_name = "saarthi-ai-dev-alb-xxxxxxxx.ap-southeast-2.elb.amazonaws.com"
+ecr_repository_url = "974913402908.dkr.ecr.ap-southeast-2.amazonaws.com/saarthi-ai"
+ecs_cluster_name = "saarthi-ai-dev-cluster"
+ecs_service_name = "saarthi-ai-dev"
 ```
 
----
-
-### Step 4: Verify Deployment
-
-After `terraform apply` succeeds, inspect the outputs:
+Verify the health check:
 ```bash
-terraform output alb_dns_name
+curl http://<alb_dns_name>/health
+# {"status":"ok","version":"1.0.0","environment":"DEV"}
 ```
-Then query the health check endpoint:
-```bash
-curl http://<ALB_DNS_NAME>/health
-```
-Expected response:
-```json
-{"status":"healthy","service":"saarthi-ai"}
-```
+
+Use `http://<alb_dns_name>` as the `VITE_API_URL` in your Vercel deployment of [`saarthi-ai-portal`](https://github.com/PPC2001/saarthi-ai-portal).

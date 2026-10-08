@@ -1,17 +1,19 @@
 variable "aws_region" {
   type        = string
-  default     = "us-east-1"
-  description = "Target AWS Region for deployment"
+  default     = "ap-southeast-2"
+  description = "Target AWS Region for deployment (Sydney)"
 }
 
 variable "account_id" {
   type        = string
-  description = "Target AWS Account ID (e.g. 123456789012)"
+  default     = "974913402908"
+  description = "Target AWS Account ID (974913402908)"
 }
 
 variable "environment_name" {
   type        = string
-  description = "Target Environment Name (e.g. DEV, PROD)"
+  default     = "DEV"
+  description = "Target Environment Name (DEV or PROD)"
 }
 
 variable "service_name" {
@@ -34,17 +36,26 @@ variable "git_tag_name" {
 
 variable "vpc_id" {
   type        = string
-  description = "VPC ID where ECS cluster and ALB will be provisioned (e.g. vpc-xxxxxxxxxxxxxxxxx)"
+  default     = ""
+  description = "VPC ID where ECS cluster and ALB will be provisioned. If empty, the default VPC is used."
 }
 
 variable "private_subnet_ids" {
   type        = list(string)
-  description = "List of private subnet IDs for ECS Fargate tasks (e.g. ['subnet-xxxxxxxx', 'subnet-yyyyyyyy'])"
+  default     = []
+  description = "List of private subnet IDs for ECS Fargate tasks. If empty, default subnets are used."
 }
 
 variable "public_subnet_ids" {
   type        = list(string)
-  description = "List of public subnet IDs for Internet-facing ALB (e.g. ['subnet-aaaaaaaa', 'subnet-bbbbbbbb'])"
+  default     = []
+  description = "List of public subnet IDs for Internet-facing ALB. If empty, default subnets are used."
+}
+
+variable "assign_public_ip" {
+  type        = bool
+  default     = null
+  description = "Whether to assign a public IP to Fargate tasks. Defaults to true when running in default/public subnets."
 }
 
 variable "container_port" {
@@ -56,7 +67,7 @@ variable "container_port" {
 variable "container_image" {
   type        = string
   default     = ""
-  description = "Full Docker image URI in AWS ECR (e.g. <ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/saarthi-ai:latest)"
+  description = "Full Docker image URI in AWS ECR (e.g. 974913402908.dkr.ecr.ap-southeast-2.amazonaws.com/saarthi-ai:latest)"
 }
 
 variable "certificate_arn" {
@@ -76,7 +87,7 @@ variable "task_definition" {
     cpu          = number
     memory       = number
     environments = map(string)
-    secrets      = map(string)
+    secrets      = optional(map(string), {})
   })
   description = "ECS Task Definition CPU, Memory, environment variables, and Secrets Manager ARNs"
 }

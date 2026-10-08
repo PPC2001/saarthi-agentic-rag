@@ -1,5 +1,21 @@
 # ==============================================================================
-# AWS ECR REPOSITORY (Optional / Managed Registry for Saarthi AI images)
+# DATA SOURCES: DEFAULT VPC & SUBNET FALLBACK
+# ==============================================================================
+data "aws_vpc" "default" {
+  count   = var.vpc_id == "" ? 1 : 0
+  default = true
+}
+
+data "aws_subnets" "default" {
+  count = length(var.public_subnet_ids) == 0 ? 1 : 0
+  filter {
+    name   = "vpc-id"
+    values = [var.vpc_id != "" ? var.vpc_id : data.aws_vpc.default[0].id]
+  }
+}
+
+# ==============================================================================
+# AWS ECR REPOSITORY (Managed Docker Registry for Saarthi AI images)
 # ==============================================================================
 resource "aws_ecr_repository" "this" {
   name                 = var.service_name
@@ -51,7 +67,7 @@ resource "aws_cloudwatch_log_group" "this" {
 resource "aws_security_group" "alb" {
   name        = "${local.name}-alb-sg"
   description = "Security group for Saarthi AI Application Load Balancer"
-  vpc_id      = var.vpc_id
+  vpc_id      = local.vpc_id
 
   ingress {
     description = "HTTP Ingress from world"
@@ -82,11 +98,11 @@ resource "aws_security_group" "alb" {
   })
 }
 
-# 2. ECS Tasks Security Group (ALB -> ECS Tasks in Private Subnets)
+# 2. ECS Tasks Security Group (ALB -> ECS Tasks)
 resource "aws_security_group" "ecs_tasks" {
   name        = "${local.name}-ecs-tasks-sg"
   description = "Security group for Saarthi AI ECS Fargate tasks"
-  vpc_id      = var.vpc_id
+  vpc_id      = local.vpc_id
 
   ingress {
     description     = "Allow container traffic from ALB only"
@@ -117,7 +133,7 @@ resource "aws_lb" "this" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
-  subnets            = var.public_subnet_ids
+  subnets            = local.public_subnet_ids
 
   enable_deletion_protection = var.environment_name == "PROD" ? true : false
 
@@ -128,7 +144,7 @@ resource "aws_lb_target_group" "this" {
   name                 = "${local.name}-tg"
   port                 = var.container_port
   protocol             = "HTTP"
-  vpc_id               = var.vpc_id
+  vpc_id               = local.vpc_id
   target_type          = "ip"
   deregistration_delay = 30
 
@@ -235,6 +251,7 @@ resource "aws_iam_policy" "ecs_secrets_access" {
         Effect = "Allow"
         Action = [
           "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret",
           "kms:Decrypt",
           "ssm:GetParameters"
         ]
@@ -251,7 +268,7 @@ resource "aws_iam_role_policy_attachment" "ecs_secrets_attachment" {
   policy_arn = aws_iam_policy.ecs_secrets_access.arn
 }
 
-# 2. ECS Task Role (Runtime permissions for Bedrock, S3, Observability)
+# 2. ECS Task Role (Runtime permissions for DynamoDB, S3, SQS, Bedrock, Secrets Manager)
 resource "aws_iam_role" "ecs_task_role" {
   name = "${local.name}-ecs-task-role"
 
@@ -273,11 +290,62 @@ resource "aws_iam_role" "ecs_task_role" {
 
 resource "aws_iam_policy" "ecs_task_policy" {
   name        = "${local.name}-runtime-policy"
-  description = "Runtime permissions for Saarthi AI to invoke Bedrock and write telemetry"
+  description = "Runtime permissions for Saarthi AI (DynamoDB checkpointer, S3 storage, SQS, Bedrock, Secrets Manager)"
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:DescribeTable"
+        ]
+        Resource = [
+          "arn:aws:dynamodb:${var.aws_region}:${var.account_id}:table/saarthi-ai-*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          "arn:aws:s3:::saarthi-*-uploads",
+          "arn:aws:s3:::saarthi-*-uploads/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "sqs:SendMessage",
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes",
+          "sqs:GetQueueUrl"
+        ]
+        Resource = [
+          "arn:aws:sqs:${var.aws_region}:${var.account_id}:saarthi-ai-*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
+        Resource = [
+          "arn:aws:secretsmanager:${var.aws_region}:${var.account_id}:secret:saarthi-ai/*"
+        ]
+      },
       {
         Effect = "Allow"
         Action = [
@@ -382,9 +450,9 @@ resource "aws_ecs_service" "this" {
   deployment_maximum_percent         = 200
 
   network_configuration {
-    subnets          = var.private_subnet_ids
+    subnets          = local.private_subnet_ids
     security_groups  = [aws_security_group.ecs_tasks.id]
-    assign_public_ip = false
+    assign_public_ip = local.assign_public_ip
   }
 
   load_balancer {

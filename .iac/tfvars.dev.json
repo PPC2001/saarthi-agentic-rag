@@ -1,39 +1,32 @@
 {
-  "aws_region": "us-east-1",
-  "account_id": "<PLACEHOLDER: 12-digit AWS Account ID, e.g. 123456789012>",
+  "aws_region": "ap-southeast-2",
+  "account_id": "974913402908",
   "environment_name": "DEV",
   "service_name": "saarthi-ai",
   "git_commit_hash": "latest",
   "git_tag_name": "v0.1.0-dev",
-  "vpc_id": "<PLACEHOLDER: VPC ID, e.g. vpc-0123456789abcdef0>",
-  "private_subnet_ids": [
-    "<PLACEHOLDER: Private Subnet A, e.g. subnet-01111111111111111>",
-    "<PLACEHOLDER: Private Subnet B, e.g. subnet-02222222222222222>"
-  ],
-  "public_subnet_ids": [
-    "<PLACEHOLDER: Public Subnet A for ALB, e.g. subnet-03333333333333333>",
-    "<PLACEHOLDER: Public Subnet B for ALB, e.g. subnet-04444444444444444>"
-  ],
+  "vpc_id": "",
+  "private_subnet_ids": [],
+  "public_subnet_ids": [],
   "container_port": 8000,
-  "container_image": "",
+  "container_image": "974913402908.dkr.ecr.ap-southeast-2.amazonaws.com/saarthi-ai:latest",
   "certificate_arn": "",
   "task_definition": {
     "cpu": 1024,
     "memory": 2048,
     "environments": {
-      "ENVIRONMENT": "development",
-      "LOG_LEVEL": "DEBUG",
+      "ENV": "DEV",
+      "ENVIRONMENT_NAME": "DEV",
+      "AWS_REGION": "ap-southeast-2",
+      "AWS_DEFAULT_REGION": "ap-southeast-2",
       "PORT": "8000",
-      "QDRANT_HOST": "<PLACEHOLDER: Qdrant endpoint, e.g. http://qdrant.dev.internal:6333>",
-      "CORS_ORIGINS": "http://localhost:5173,http://localhost:8000"
+      "LOG_LEVEL": "INFO",
+      "S3_BUCKET_NAME": "saarthi-dev-uploads",
+      "SECRET_NAME": "saarthi-ai/dev/secrets",
+      "DYNAMODB_TABLE_PREFIX": "saarthi-ai",
+      "CORS_ORIGINS": "http://localhost:3000,http://localhost:5173,https://saarthi-ai-portal.vercel.app,https://*.vercel.app"
     },
-    "secrets": {
-      "LOGFIRE_TOKEN": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:saarthi-ai/dev/logfire-token",
-      "QWEN_API_KEY": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:saarthi-ai/dev/qwen-api-key",
-      "TAVILY_API_KEY": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:saarthi-ai/dev/tavily-api-key",
-      "QDRANT_API_KEY": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:saarthi-ai/dev/qdrant-api-key",
-      "SECRET_KEY": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:saarthi-ai/dev/session-secret"
-    }
+    "secrets": {}
   },
   "service": {
     "min_capacity": 1,
@@ -43,6 +36,7 @@
   "tags": {
     "Project": "Saarthi-AI",
     "Environment": "DEV",
+    "Region": "ap-southeast-2",
     "Owner": "Insurance-Tech",
     "ManagedBy": "Terraform"
   }
